@@ -2,10 +2,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, MapPin, Eye, MessageSquare, Filter, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom"; // <-- IMPORT LINK
+import { Link } from "react-router-dom";
 
 export default function Reports() {
   const [reports, setReports] = useState<any[]>([]);
@@ -16,13 +17,13 @@ export default function Reports() {
     endDate: ''
   });
 
-  // Fully implemented fetchReports function
   const fetchReports = async () => {
     try {
       const activeFilters = Object.fromEntries(
         Object.entries(filters).filter(([, value]) => value !== '')
       );
       const queryParams = new URLSearchParams(activeFilters).toString();
+      // This fetch call matches the GET /api/reports route in your server.js
       const response = await fetch(`http://localhost:5001/api/reports?${queryParams}`);
       if (!response.ok) {
         throw new Error('Network response was not ok');
@@ -93,13 +94,22 @@ export default function Reports() {
           <p className="text-center text-muted-foreground py-8">No reports found.</p>
         ) : (
           reports.map((report) => {
-            const imageUrls = report.image_url ? report.image_url.split(',') : [];
+            // Logic to correctly parse the image URLs from your server
+            let imageUrls: string[] = [];
+            if (report.image_urls && typeof report.image_urls === 'string') {
+              try {
+                imageUrls = JSON.parse(report.image_urls);
+              } catch (e) { 
+                console.error("Could not parse image_urls for report ID:", report.id, e); 
+              }
+            }
+
             return (
               <Card key={report.id} className="hover:shadow-lg transition-all duration-300">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg capitalize">{report.category} issue</CardTitle>
-                    <Badge variant={report.status === "Resolved" ? "default" : report.status === "In Progress" ? "secondary" : "outline"}>
+                    <Badge variant={report.status === "Resolved" ? "default" : "outline"}>
                       {report.status}
                     </Badge>
                   </div>
@@ -111,17 +121,33 @@ export default function Reports() {
                 <CardContent>
                   <p className="text-muted-foreground">{report.description}</p>
                   
+                  {report.voice_note_url && (
+                    <div className="mt-4">
+                      <Label className="text-xs font-semibold text-muted-foreground">Voice Note</Label>
+                      <audio
+                        controls
+                        src={`http://localhost:5001${report.voice_note_url}`}
+                        className="w-full h-10 mt-1"
+                      >
+                        Your browser does not support the audio element.
+                      </audio>
+                    </div>
+                  )}
+
                   {imageUrls.length > 0 && (
-                    <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
-                      {imageUrls.map((path, index) => (
-                        <a href={`http://localhost:5001/${path}`} target="_blank" rel="noopener noreferrer" key={index}>
-                          <img
-                            src={`http://localhost:5001/${path}`}
-                            alt={`Report image ${index + 1}`}
-                            className="h-28 w-28 object-cover rounded-md border hover:opacity-80 transition-opacity"
-                          />
-                        </a>
-                      ))}
+                    <div className="mt-4">
+                        <Label className="text-xs font-semibold text-muted-foreground">Image Evidence</Label>
+                        <div className="flex gap-2 overflow-x-auto pt-2 pb-2">
+                          {imageUrls.map((path: string, index: number) => (
+                            <a href={`http://localhost:5001${path}`} target="_blank" rel="noopener noreferrer" key={index}>
+                              <img
+                                src={`http://localhost:5001${path}`}
+                                alt={`Report image ${index + 1}`}
+                                className="h-28 w-28 object-cover rounded-md border hover:opacity-80 transition-opacity"
+                              />
+                            </a>
+                          ))}
+                        </div>
                     </div>
                   )}
 
@@ -133,7 +159,6 @@ export default function Reports() {
                           <a href={report.map_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 mr-1" />View on Map</a>
                         </Button>
                       )}
-                      {/* --- THIS BUTTON IS NOW A FUNCTIONAL LINK --- */}
                       <Button variant="outline" size="sm" asChild>
                         <Link to={`/report/${report.id}`}>
                           <Eye className="h-4 w-4 mr-1" />
