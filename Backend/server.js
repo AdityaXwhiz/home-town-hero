@@ -14,11 +14,13 @@ const saltRounds = 10;
 const uploadsDir = path.join(__dirname, 'uploads');
 const audioDir = path.join(uploadsDir, 'audio');
 const imagesDir = path.join(uploadsDir, 'images');
+const postImagesDir = path.join(uploadsDir, 'postImages'); // <-- 1. ADDED: Directory for post images
 
 // Ensure upload directories exist
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
 if (!fs.existsSync(audioDir)) fs.mkdirSync(audioDir);
 if (!fs.existsSync(imagesDir)) fs.mkdirSync(imagesDir);
+if (!fs.existsSync(postImagesDir)) fs.mkdirSync(postImagesDir); // <-- 2. ADDED: Create the new directory
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -26,6 +28,8 @@ const storage = multer.diskStorage({
             cb(null, imagesDir);
         } else if (file.fieldname === 'voice_note') {
             cb(null, audioDir);
+        } else if (file.fieldname === 'postImage') { // <-- 3. ADDED: Handle post images
+            cb(null, postImagesDir);
         } else {
             cb(new Error('Invalid fieldname'), null);
         }
@@ -36,35 +40,37 @@ const storage = multer.diskStorage({
     }
 });
 
+const fileFilter = (req, file, cb) => {
+    const imageTypes = /jpeg|jpg|png|gif/;
+    const audioTypes = /webm|mp3|wav|ogg|mpeg/;
+
+    if (file.fieldname === 'reportImages' || file.fieldname === 'postImage') { // <-- 4. ADDED: Check for postImage
+        const extname = imageTypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = imageTypes.test(file.mimetype);
+        if (mimetype && extname) {
+            return cb(null, true);
+        }
+        return cb(new Error('Only image files are allowed!'));
+    }
+
+    if (file.fieldname === 'voice_note') {
+        const extname = audioTypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = audioTypes.test(file.mimetype);
+        if (mimetype && extname) {
+            return cb(null, true);
+        }
+        return cb(new Error('Only audio files are allowed!'));
+    }
+
+    cb(new Error('Invalid file type!'));
+};
+
 const upload = multer({
     storage: storage,
     limits: { fileSize: 20000000 },
-    fileFilter: function (req, file, cb) {
-        if (file.fieldname === 'reportImages') {
-            const imageTypes = /jpeg|jpg|png|gif/;
-            const extname = imageTypes.test(path.extname(file.originalname).toLowerCase());
-            const mimetype = imageTypes.test(file.mimetype);
-            if (mimetype && extname) {
-                return cb(null, true);
-            } else {
-                return cb(new Error('Only image files are allowed!'));
-            }
-        } else if (file.fieldname === 'voice_note') {
-            const audioTypes = /webm|mp3|wav|ogg|mpeg/;
-            const extname = audioTypes.test(path.extname(file.originalname).toLowerCase());
-            const mimetype = audioTypes.test(file.mimetype);
-            if (mimetype && extname) {
-                return cb(null, true);
-            } else {
-                return cb(new Error('Only audio files are allowed!'));
-            }
-        }
-        cb(new Error('Invalid file type!'));
-    }
-}).fields([
-    { name: 'reportImages', maxCount: 5 },
-    { name: 'voice_note', maxCount: 1 }
-]);
+    fileFilter: fileFilter
+});
+
 
 // --- MIDDLEWARE ---
 app.use(cors());
@@ -128,63 +134,43 @@ app.post('/login', (req, res) => {
 });
 
 // --- UPDATED REPORT ROUTES ---
-app.post('/api/reports', (req, res) => {
-    upload(req, res, (err) => {
-        if (err) {
-            console.error("Multer upload error:", err);
-            return res.status(400).json({ msg: 'File upload failed: ' + err.message });
-        }
-        const { category, name, phone, location, description, latitude, longitude, map_url, details } = req.body;
-        if (!category || !name || !phone || !location || !description) {
-            if (req.files) {
-                if (req.files.reportImages) req.files.reportImages.forEach(file => fs.unlinkSync(file.path));
-                if (req.files.voice_note) fs.unlinkSync(req.files.voice_note[0].path);
-            }
-            return res.status(400).json({ msg: 'All required text fields were not provided.' });
-        }
-        const imageFiles = req.files['reportImages'] || [];
-        const voiceNoteFile = req.files['voice_note'] ? req.files.voice_note[0] : null;
-        const imageUrls = imageFiles.map(file => `/uploads/images/${file.filename}`);
-        const voiceNoteUrl = voiceNoteFile ? `/uploads/audio/${voiceNoteFile.filename}` : null;
-        
-        const insertQuery = `INSERT INTO reports (
-            category, name, phone, location, description, latitude, longitude, map_url, details, image_urls, voice_note_url
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+const reportUpload = upload.fields([
+    { name: 'reportImages', maxCount: 5 },
+    { name: 'voice_note', maxCount: 1 }
+]);
 
-        connection.query(insertQuery, [
-            category,
-            name,
-            phone,
-            location,
-            description,
-            latitude,
-            longitude,
-            map_url,
-            details,
-            JSON.stringify(imageUrls),
-            voiceNoteUrl
-        ], (err, result) => {
-            if (err) {
-                console.error('Database insert error:', err);
-                return res.status(500).json({ msg: 'Database insert error', error: err.sqlMessage || err });
-            }
-            res.status(201).json({ msg: 'Report submitted successfully!', reportId: result.insertId });
-        });
+app.post('/api/reports', reportUpload, (req, res) => {
+    const { category, name, phone, location, description, latitude, longitude, map_url, details } = req.body;
+    if (!category || !name || !phone || !location || !description) {
+        if (req.files) {
+            if (req.files.reportImages) req.files.reportImages.forEach(file => fs.unlinkSync(file.path));
+            if (req.files.voice_note) fs.unlinkSync(req.files.voice_note[0].path);
+        }
+        return res.status(400).json({ msg: 'All required text fields were not provided.' });
+    }
+    const imageFiles = req.files['reportImages'] || [];
+    const voiceNoteFile = req.files['voice_note'] ? req.files.voice_note[0] : null;
+    const imageUrls = imageFiles.map(file => `/uploads/images/${file.filename}`);
+    const voiceNoteUrl = voiceNoteFile ? `/uploads/audio/${voiceNoteFile.filename}` : null;
+    
+    const insertQuery = `INSERT INTO reports (
+        category, name, phone, location, description, latitude, longitude, map_url, details, image_urls, voice_note_url
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    connection.query(insertQuery, [
+        category, name, phone, location, description, latitude, longitude, map_url, details, JSON.stringify(imageUrls), voiceNoteUrl
+    ], (err, result) => {
+        if (err) {
+            console.error('Database insert error:', err);
+            return res.status(500).json({ msg: 'Database insert error', error: err.sqlMessage || err });
+        }
+        res.status(201).json({ msg: 'Report submitted successfully!', reportId: result.insertId });
     });
 });
 
 app.get('/api/reports', (req, res) => {
-    let query = 'SELECT * FROM reports';
-    const params = [];
-    const conditions = [];
-    const { category, status, startDate, endDate } = req.query;
-    if (category) { conditions.push('category = ?'); params.push(category); }
-    if (status) { conditions.push('status = ?'); params.push(status); }
-    if (startDate) { conditions.push('created_at >= ?'); params.push(startDate); }
-    if (endDate) { conditions.push('created_at <= ?'); params.push(endDate); }
-    if (conditions.length > 0) { query += ' WHERE ' + conditions.join(' AND '); }
-    query += ' ORDER BY created_at DESC';
-    connection.query(query, params, (err, results) => {
+    let query = 'SELECT * FROM reports ORDER BY created_at DESC';
+    connection.query(query, (err, results) => {
         if (err) return res.status(500).json({ msg: 'Database error', error: err });
         res.json(results);
     });
@@ -223,11 +209,8 @@ app.post('/api/reports/:id/comments', (req, res) => {
     });
 });
 
-// --- ✨ NEW NGO API ROUTES ✨ ---
-
-// GET all approved NGOs
+// --- NGO API ROUTES ---
 app.get('/api/ngos', (req, res) => {
-    // We can filter by status later, for now let's get all
     const query = 'SELECT * FROM ngos ORDER BY name ASC'; 
     connection.query(query, (err, results) => {
         if (err) {
@@ -238,32 +221,18 @@ app.get('/api/ngos', (req, res) => {
     });
 });
 
-// POST a new NGO registration
 app.post('/api/ngos', (req, res) => {
-    const { 
-        name, regNumber, presidentName, secretaryName, 
-        focus, address, email, phone, website, description 
-    } = req.body;
-
-    // Basic validation
+    const { name, regNumber, presidentName, secretaryName, focus, address, email, phone, website, description } = req.body;
     if (!name || !regNumber || !presidentName || !secretaryName || !focus || !address || !email || !description) {
         return res.status(400).json({ msg: 'Please fill out all required fields.' });
     }
-    
     const query = `INSERT INTO ngos (
-        name, reg_number, president_name, secretary_name, 
-        focus_area, address, email, phone, website, description
+        name, reg_number, president_name, secretary_name, focus_area, address, email, phone, website, description
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
-    const values = [
-        name, regNumber, presidentName, secretaryName, 
-        focus, address, email, phone, website, description
-    ];
-
+    const values = [ name, regNumber, presidentName, secretaryName, focus, address, email, phone, website, description ];
     connection.query(query, values, (err, result) => {
         if (err) {
             console.error('Database insert error:', err);
-            // Check for duplicate entry
             if (err.code === 'ER_DUP_ENTRY') {
                 return res.status(409).json({ msg: 'An NGO with this registration number or email already exists.' });
             }
@@ -272,6 +241,60 @@ app.post('/api/ngos', (req, res) => {
         res.status(201).json({ msg: 'NGO registered successfully! Your application is pending review.' });
     });
 });
+
+
+// --- ✨ ADDED: COMMUNITY POST ROUTES ✨ ---
+const postUpload = upload.single('postImage');
+
+// GET all community posts
+app.get('/api/posts', (req, res) => {
+    const query = 'SELECT * FROM community_posts ORDER BY created_at DESC';
+    connection.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching posts:', err);
+            return res.status(500).json({ msg: 'Database error' });
+        }
+        res.json(results);
+    });
+});
+
+// POST a new community post
+app.post('/api/posts', postUpload, (req, res) => {
+    const { title, content, author_name, author_avatar } = req.body;
+    if (!title || !content || !author_name || !author_avatar) {
+        if (req.file) fs.unlinkSync(req.file.path); // Clean up uploaded file
+        return res.status(400).json({ msg: 'Title, content, and author details are required' });
+    }
+    
+    const imageUrl = req.file ? `/uploads/postImages/${req.file.filename}` : null;
+    
+    const insertQuery = `INSERT INTO community_posts (title, content, author_name, author_avatar, image_url) VALUES (?, ?, ?, ?, ?)`;
+    connection.query(insertQuery, [title, content, author_name, author_avatar, imageUrl], (err, result) => {
+        if (err) {
+            console.error('Error creating post:', err);
+            return res.status(500).json({ msg: 'Database error' });
+        }
+        res.status(201).json({ msg: 'Post created successfully!', postId: result.insertId });
+    });
+});
+
+// PUT to like a post
+app.put('/api/posts/:id/like', (req, res) => {
+    const { id } = req.params;
+    // This is a simplified "like" that just increments the count.
+    const query = 'UPDATE community_posts SET likes = likes + 1 WHERE id = ?';
+    connection.query(query, [id], (err, result) => {
+        if (err) {
+            console.error('Error liking post:', err);
+            return res.status(500).json({ msg: 'Database error' });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ msg: 'Post not found' });
+        }
+        res.json({ msg: 'Post liked successfully!' });
+    });
+});
+
 
 // --- START SERVER ---
 app.listen(PORT, () => console.log(`✅ Server started on port ${PORT}`));
