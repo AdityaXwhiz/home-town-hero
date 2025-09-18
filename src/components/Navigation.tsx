@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Menu, Bell, User, ShieldCheck } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Link } from "react-router-dom"; // <-- 1. IMPORT LINK
+import { Link } from "react-router-dom"; 
 
 export const Navigation = () => {
   return (
@@ -19,7 +19,7 @@ export const Navigation = () => {
             </div>
           </div>
 
-          {/* --- 2. UPDATED NAVIGATION LINKS --- */}
+          {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-12">
             <Link to="/" className="text-muted-foreground hover:text-primary transition-colors font-medium">
               Home
@@ -33,18 +33,21 @@ export const Navigation = () => {
               Community
             </Link>
 
-            {/* This link currently goes to Home. You can change the path once you create an About page. */}
             <Link to="/" className="text-muted-foreground hover:text-primary transition-colors font-medium">
               About
             </Link>
           </div>
 
-          {/* Action Buttons (Unchanged, as they link to external HTML pages) */}
+          {/* --- UPDATED ACTION BUTTONS --- */}
           <div className="hidden md:flex items-center space-x-3">
-            <Button>
-              <Bell className="h-4 w-4 mr-2" />
-              Alerts
+            {/* This button now links to the /alerts route */}
+            <Button asChild>
+              <Link to="/alerts">
+                <Bell className="h-4 w-4 mr-2" />
+                Alerts
+              </Link>
             </Button>
+            
             <Button asChild variant="outline">
               <a href="/Signuplogin/login.html">
                 <User className="h-4 w-4 mr-2" />
@@ -68,3 +71,4 @@ export const Navigation = () => {
     </nav>
   );
 };
+
