@@ -223,5 +223,56 @@ app.post('/api/reports/:id/comments', (req, res) => {
     });
 });
 
+// --- ✨ NEW NGO API ROUTES ✨ ---
+
+// GET all approved NGOs
+app.get('/api/ngos', (req, res) => {
+    // We can filter by status later, for now let's get all
+    const query = 'SELECT * FROM ngos ORDER BY name ASC'; 
+    connection.query(query, (err, results) => {
+        if (err) {
+            console.error('Database query error:', err);
+            return res.status(500).json({ msg: 'Database error fetching NGOs' });
+        }
+        res.json(results);
+    });
+});
+
+// POST a new NGO registration
+app.post('/api/ngos', (req, res) => {
+    const { 
+        name, regNumber, presidentName, secretaryName, 
+        focus, address, email, phone, website, description 
+    } = req.body;
+
+    // Basic validation
+    if (!name || !regNumber || !presidentName || !secretaryName || !focus || !address || !email || !description) {
+        return res.status(400).json({ msg: 'Please fill out all required fields.' });
+    }
+    
+    const query = `INSERT INTO ngos (
+        name, reg_number, president_name, secretary_name, 
+        focus_area, address, email, phone, website, description
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    const values = [
+        name, regNumber, presidentName, secretaryName, 
+        focus, address, email, phone, website, description
+    ];
+
+    connection.query(query, values, (err, result) => {
+        if (err) {
+            console.error('Database insert error:', err);
+            // Check for duplicate entry
+            if (err.code === 'ER_DUP_ENTRY') {
+                return res.status(409).json({ msg: 'An NGO with this registration number or email already exists.' });
+            }
+            return res.status(500).json({ msg: 'Database error during registration.' });
+        }
+        res.status(201).json({ msg: 'NGO registered successfully! Your application is pending review.' });
+    });
+});
+
 // --- START SERVER ---
 app.listen(PORT, () => console.log(`✅ Server started on port ${PORT}`));
+

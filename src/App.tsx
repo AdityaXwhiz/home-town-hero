@@ -17,7 +17,8 @@ import NotFound from "./pages/NotFound";
 import { ReportIssuePage } from "./components/ReportIssuePage";
 import ReportDetailPage from "./pages/ReportDetailPage";
 import { useLenis } from "./hooks/useLenis";
-import AlertsPage from "./pages/AlertsPage"; // <-- 1. IMPORT THE HOOK
+import AlertsPage from "./pages/AlertsPage"; 
+import NGO from "./pages/NGO";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => {
                   <Route path="/report-issue" element={<ReportIssuePage />} />
                   <Route path="/report/:id" element={<ReportDetailPage />} />
                   <Route path="/alerts" element={<AlertsPage/>} />
+                  <Route path="/ngo" element={<NGO/>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
