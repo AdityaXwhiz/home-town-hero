@@ -128,6 +128,7 @@ const CaseManagement: React.FC = () => {
                                             <h4 className="font-semibold text-sm mb-2">Attached Images</h4>
                                             <div className="flex flex-wrap gap-2">
                                                 {imageUrls.map((url: string, index: number) => (
+                                                    // ✨ CORRECTED CODE HERE ✨
                                                     <a key={index} href={`http://localhost:5001${url}`} target="_blank" rel="noopener noreferrer">
                                                         <img src={`http://localhost:5001${url}`} alt={`Report image ${index + 1}`} className="w-24 h-24 object-cover rounded-md" />
                                                     </a>
@@ -135,7 +136,7 @@ const CaseManagement: React.FC = () => {
                                             </div>
                                         </div>
                                     )}
-                                    {/* Display Audio */}
+                                    {/* Display Audio (Unchanged as requested) */}
                                     {report.voice_note_url && (
                                         <div>
                                             <h4 className="font-semibold text-sm mb-2">Voice Note</h4>

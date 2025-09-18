@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Users, Award, Heart, Lightbulb } from "lucide-react";
 import heroImage from "@/assets/civic-hero.jpg";
+import { Link } from "react-router-dom"; // <-- 1. IMPORT LINK
 
 export const HeroSection = () => {
   return (
@@ -23,12 +24,13 @@ export const HeroSection = () => {
             Report civic issues instantly. Track progress in real-time. Build a better community together.
           </p>
           
+          {/* --- 2. UPDATED BUTTONS --- */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button size="lg" variant="outline" className="bg-white text-black hover:bg-white/10 text-lg px-8 py-4">
-              Report an Issue
+            <Button asChild size="lg" variant="outline" className="bg-white text-black hover:bg-white/10 text-lg px-8 py-4">
+              <Link to="/report-issue">Report an Issue</Link>
             </Button>
-            <Button size="lg" variant="outline" className="text-black border-white hover:bg-white/10 text-lg px-8 py-4">
-              View Progress
+            <Button asChild size="lg" variant="outline" className="text-black border-white hover:bg-white/10 text-lg px-8 py-4">
+              <Link to="/Progress">View Progress</Link>
             </Button>
           </div>
 
