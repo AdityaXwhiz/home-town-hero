@@ -10,6 +10,7 @@ import {
   Calendar,
   Megaphone,
   Handshake,
+  Map, // 1. Import the Map icon
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
@@ -25,14 +26,15 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
+// 2. Add the new "Live Report Map" item to the array
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: Home },
   { title: "Report Issue", url: "/report-issue", icon: Megaphone },
   { title: "My Reports", url: "/reports", icon: FileText },
   { title: "Progress Tracking", url: "/progress", icon: Calendar },
+  { title: "Live Report Map", url: "/map", icon: Map }, // <-- ADDED HERE
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Community", url: "/community", icon: Users },
-  // --- FIX: Updated the URL to match App.tsx ---
   { title: "NGO Portal", url: "/ngo", icon: Handshake },
   { title: "Leaderboard", url: "/leaderboard", icon: Award },
   { title: "Trending Issues", url: "/trending", icon: TrendingUp },
@@ -58,7 +60,8 @@ export function CivicSidebar() {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.slice(0, 4).map((item) => (
+              {/* 3. Updated slice to include the new map link */}
+              {navigationItems.slice(0, 5).map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} end className={getNavClasses}>
@@ -77,7 +80,7 @@ export function CivicSidebar() {
           <SidebarGroupLabel>Community</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.slice(4, 6).map((item) => (
+              {navigationItems.slice(5, 7).map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} end className={getNavClasses}>
@@ -96,7 +99,7 @@ export function CivicSidebar() {
           <SidebarGroupLabel>Partnerships</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.slice(6, 7).map((item) => (
+              {navigationItems.slice(7, 8).map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} end className={getNavClasses}>
@@ -115,7 +118,7 @@ export function CivicSidebar() {
           <SidebarGroupLabel>Engagement</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.slice(7, 9).map((item) => (
+              {navigationItems.slice(8, 10).map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} end className={getNavClasses}>

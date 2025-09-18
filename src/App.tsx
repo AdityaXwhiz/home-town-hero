@@ -19,6 +19,7 @@ import ReportDetailPage from "./pages/ReportDetailPage";
 import { useLenis } from "./hooks/useLenis";
 import AlertsPage from "./pages/AlertsPage"; 
 import NGO from "./pages/NGO";
+import LiveReportMap from "./pages/LiveReportMap";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => {
                   <Route path="/report/:id" element={<ReportDetailPage />} />
                   <Route path="/alerts" element={<AlertsPage/>} />
                   <Route path="/ngo" element={<NGO/>} />
+                  <Route path="/map" element={<LiveReportMap/>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
