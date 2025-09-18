@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Users, Heart, MessageCircle, Share2, TrendingUp, PlusCircle } from "lucide-react";
+import { Users, Star, MessageCircle, Share2, TrendingUp, PlusCircle } from "lucide-react";
 
 // --- MOCK DATA FOR BLOG POSTS (with 'isLiked' state) ---
 const initialPosts = [
@@ -148,7 +148,7 @@ export default function CommunityBlogPage() {
                 <div className="flex items-center gap-2 pt-4 border-t">
                   {/* --- NEW INTERACTIVE LIKE BUTTON --- */}
                   <Button variant="ghost" size="sm" onClick={() => handleLikeToggle(post.id)}>
-                      <Heart className={`h-4 w-4 mr-2 transition-colors ${post.isLiked ? 'text-red-500 fill-red-500' : 'text-gray-500'}`} />
+                      <Star className={`h-4 w-4 mr-2 transition-colors ${post.isLiked ? 'text-yellow-400 fill-yellow-400' : 'text-gray-500'}`} />
                       {post.likes}
                   </Button>
                   <Button variant="ghost" size="sm">
