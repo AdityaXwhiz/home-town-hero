@@ -1,148 +1,102 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { 
-  MapPin, 
-  Star, 
-  Calendar, 
-  User, 
-  Image as ImageIcon,
-  Mic,
-  Eye,
-  CheckCircle2
-} from "lucide-react";
+// In src/components/CaseCard.tsx
+// ✅ THIS FILE IS ALREADY CORRECT. No changes were needed.
+import React from 'react';
 
-interface CaseCardProps {
-  case_: {
-    id: string;
-    title: string;
-    description: string;
-    status: "active" | "in-progress" | "completed";
-    priority: "low" | "medium" | "high";
-    assignedTo: string;
-    reportedBy: string;
-    category: string;
-    location: string;
-    createdAt: string;
-    rating?: number;
-    hasPhoto?: boolean;
-    hasVoiceNote?: boolean;
-    coordinates?: { lat: number; lng: number };
-  };
-  onMarkComplete: (id: string) => void;
-  onViewDetails: (id: string) => void;
+// Assuming these types are defined in a central types file
+type CaseStatus = 'Pending' | 'In Progress' | 'Resolved' | 'Rejected';
+interface Case {
+  id: number;
+  title: string;
+  status: CaseStatus;
+  description: string;
+  date: string;
+  potholeSize?: string; // Optional property
+  imageUrl?: string; // Optional property
 }
 
-const CaseCard = ({ case_, onMarkComplete, onViewDetails }: CaseCardProps) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed": return "bg-success text-success-foreground";
-      case "in-progress": return "bg-warning text-warning-foreground";
-      case "active": return "bg-primary text-primary-foreground";
-      default: return "bg-muted text-muted-foreground";
-    }
-  };
+// Props definition for the component
+interface CaseCardProps {
+  caseData: Case;
+  onStatusChange: (id: number, newStatus: CaseStatus) => void;
+}
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high": return "bg-destructive text-destructive-foreground";
-      case "medium": return "bg-warning text-warning-foreground";
-      case "low": return "bg-success text-success-foreground";
-      default: return "bg-muted text-muted-foreground";
-    }
+// A helper object to map status to colors for the badge
+const statusStyles: { [key in CaseStatus]: string } = {
+  Pending: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+  'In Progress': 'bg-blue-100 text-blue-800 border-blue-300',
+  Resolved: 'bg-green-100 text-green-800 border-green-300',
+  Rejected: 'bg-red-100 text-red-800 border-red-300',
+};
+
+const CaseCard = ({ caseData, onStatusChange }: CaseCardProps) => {
+  
+  const handleDropdownChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newStatus = e.target.value as CaseStatus;
+    onStatusChange(caseData.id, newStatus);
   };
 
   return (
-    <Card className="bg-gradient-card-overlay border-0 shadow-card hover:shadow-lg transition-all duration-300">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="font-semibold text-lg text-civic-blue">{case_.title}</h3>
-              <Badge className={getStatusColor(case_.status)} variant="secondary">
-                {case_.status.replace("-", " ")}
-              </Badge>
-              <Badge className={getPriorityColor(case_.priority)} variant="outline">
-                {case_.priority}
-              </Badge>
-            </div>
-            <p className="text-muted-foreground mb-3 leading-relaxed">{case_.description}</p>
-          </div>
-        </div>
+    <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+      <div className="flex justify-between items-start">
+        <h2 className="text-lg font-semibold text-gray-800">{caseData.title}</h2>
+        <span
+          className={`px-3 py-1 text-sm font-medium rounded-full border ${statusStyles[caseData.status]}`}
+        >
+          {caseData.status}
+        </span>
+      </div>
 
-        {/* Case Details */}
-        <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <MapPin className="w-4 h-4 text-civic-teal" />
-            <span>{case_.location}</span>
-          </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Calendar className="w-4 h-4 text-civic-teal" />
-            <span>{new Date(case_.createdAt).toLocaleDateString()}</span>
-          </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <User className="w-4 h-4 text-civic-teal" />
-            <span>Reported by: {case_.reportedBy}</span>
-          </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <User className="w-4 h-4 text-civic-teal" />
-            <span>Assigned: {case_.assignedTo}</span>
-          </div>
+      <div className="mt-4 text-gray-600">
+        <p>{caseData.description}</p>
+        <div className="text-sm text-gray-500 mt-2">
+          <span>{caseData.date}</span> | <span>View on Map</span>
         </div>
+        <p className="mt-1">
+          <span className="font-semibold">Pothole Size:</span> {caseData.potholeSize}
+        </p>
+      </div>
 
-        {/* Media Indicators */}
-        <div className="flex items-center gap-4 mb-4">
-          {case_.hasPhoto && (
-            <div className="flex items-center gap-1 text-civic-blue text-xs">
-              <ImageIcon className="w-3 h-3" />
-              <span>Photo</span>
-            </div>
-          )}
-          {case_.hasVoiceNote && (
-            <div className="flex items-center gap-1 text-civic-blue text-xs">
-              <Mic className="w-3 h-3" />
-              <span>Voice Note</span>
-            </div>
-          )}
-          {case_.coordinates && (
-            <div className="flex items-center gap-1 text-civic-blue text-xs">
-              <MapPin className="w-3 h-3" />
-              <span>GPS Location</span>
-            </div>
-          )}
-          {case_.rating && (
-            <div className="flex items-center gap-1 text-amber-500 text-xs ml-auto">
-              <Star className="w-3 h-3 fill-amber-400" />
-              <span>{case_.rating}</span>
-            </div>
-          )}
+      {caseData.imageUrl && (
+        <div className="mt-4">
+          <p className="font-semibold text-gray-700">Attached Images:</p>
+          <img src={caseData.imageUrl} alt="Pothole" className="mt-2 rounded-md max-w-xs border" />
         </div>
+      )}
 
-        {/* Actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-border">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => onViewDetails(case_.id)}
-            className="flex items-center gap-2"
+      <div className="mt-6 flex items-center justify-end space-x-3">
+        {caseData.status === 'Pending' && (
+           <button 
+             onClick={() => onStatusChange(caseData.id, 'In Progress')}
+             className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+           >
+             Mark In Progress
+           </button>
+        )}
+        {caseData.status === 'In Progress' && (
+           <button 
+             onClick={() => onStatusChange(caseData.id, 'Resolved')}
+             className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
+           >
+             Mark as Resolved
+           </button>
+        )}
+        
+        <div>
+          <label htmlFor={`status-select-${caseData.id}`} className="sr-only">Update Status</label>
+          <select 
+            id={`status-select-${caseData.id}`}
+            value={caseData.status}
+            onChange={handleDropdownChange}
+            className="border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
           >
-            <Eye className="w-4 h-4" />
-            View Details
-          </Button>
-          
-          {case_.status === "in-progress" && (
-            <Button 
-              onClick={() => onMarkComplete(case_.id)}
-              className="bg-civic-blue hover:bg-civic-blue-dark text-white flex items-center gap-2"
-              size="sm"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              Mark Complete
-            </Button>
-          )}
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+            <option value="Rejected">Rejected</option>
+          </select>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

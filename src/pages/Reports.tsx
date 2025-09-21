@@ -109,7 +109,7 @@ export default function Reports() {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg capitalize">{report.category} issue</CardTitle>
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary">ID: {report.id}</Badge>
+                      <Badge variant="secondary"> Report ID: {report.id}</Badge>
                       <Badge variant={report.status === "Resolved" ? "default" : "outline"}>
                         {report.status}
                       </Badge>

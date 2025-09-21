@@ -54,15 +54,10 @@ export const CivicResponsibilities = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
           {responsibilities.map((item, index) => (
             <Card key={index} className="group relative overflow-hidden rounded-lg shadow-lg border-2 border-slate-200/60 hover:border-primary transition-all duration-500 ease-in-out transform hover:-translate-y-3 hover:shadow-2xl hover:shadow-primary/40">
-              {/* Image with zoom effect */}
               <div className="h-64 overflow-hidden">
                 <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-125 transition-transform duration-500" />
               </div>
-
-              {/* Gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
-
-              {/* Content that moves up on hover */}
               <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform translate-y-12 group-hover:translate-y-0 transition-transform duration-500 ease-in-out">
                 <div className="flex items-center gap-4 mb-2">
                   <div className="p-3 bg-white/20 backdrop-blur-sm rounded-lg">
@@ -78,43 +73,48 @@ export const CivicResponsibilities = () => {
           ))}
         </div>
 
-        {/* Contact Section */}
-        <div id="contact" className="max-w-4xl mx-auto">
-          <Card className="bg-gradient-civic text-white shadow-civic border-2 border-white/20">
-            <CardContent className="p-8">
-              <div className="text-center mb-8">
+        {/* --- UPDATED CONTACT SECTION --- */}
+        <div id="contact" className="max-w-5xl mx-auto">
+          <Card className="relative overflow-hidden rounded-2xl shadow-2xl">
+             <img src="https://images.pexels.com/photos/768043/pexels-photo-768043.jpeg" alt="Delhi cityscape" className="absolute inset-0 w-full h-full object-cover" />
+             <div className="absolute inset-0 bg-black/60"></div>
+            <CardContent className="relative z-10 p-8 md:p-12 text-white">
+              <div className="text-center mb-10">
                 <h3 className="text-3xl font-bold mb-4">Get in Touch</h3>
-                <p className="text-lg text-gray-100">
-                  Have questions or need assistance? We're here to help make your community better.
+                <p className="text-lg text-gray-200 max-w-2xl mx-auto">
+                  Have questions or need assistance? We're here to help make our community better.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="text-center">
-                  <div className="bg-white/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Phone className="h-8 w-8 text-white" />
+                {/* Call Us Card */}
+                <div className="text-center p-6 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 hover:bg-white/20 transition-colors duration-300">
+                  <div className="bg-white/20 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Phone className="h-8 w-8" />
                   </div>
-                  <h4 className="font-semibold mb-2">Call Us</h4>
-                  <p className="text-gray-200">+1 (555) 123-4567</p>
-                  <p className="text-gray-200">24/7 Emergency Line</p>
+                  <h4 className="font-semibold text-white mb-2 text-lg">Call Us</h4>
+                  <p className="text-gray-300">+91 98765 43210</p>
+                  <p className="text-gray-300 text-sm">24/7 Support Line</p>
                 </div>
 
-                <div className="text-center">
-                  <div className="bg-white/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Mail className="h-8 w-8 text-white" />
+                {/* Email Us Card */}
+                <div className="text-center p-6 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 hover:bg-white/20 transition-colors duration-300">
+                  <div className="bg-white/20 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Mail className="h-8 w-8" />
                   </div>
-                  <h4 className="font-semibold mb-2">Email Us</h4>
-                  <p className="text-gray-200">support@civicvoice.com</p>
-                  <p className="text-gray-200">Response within 24hrs</p>
+                  <h4 className="font-semibold text-white mb-2 text-lg">Email Us</h4>
+                  <p className="text-gray-300">support@civicsync.in</p>
+                  <p className="text-gray-300 text-sm">Response within 24hrs</p>
                 </div>
 
-                <div className="text-center">
-                  <div className="bg-white/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MapPin className="h-8 w-8 text-white" />
+                {/* Visit Us Card */}
+                <div className="text-center p-6 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 hover:bg-white/20 transition-colors duration-300">
+                  <div className="bg-white/20 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MapPin className="h-8 w-8" />
                   </div>
-                  <h4 className="font-semibold mb-2">Visit Us</h4>
-                  <p className="text-gray-200">City Hall, Room 201</p>
-                  <p className="text-gray-200">Mon-Fri, 9AM-5PM</p>
+                  <h4 className="font-semibold text-white mb-2 text-lg">Visit Us</h4>
+                  <p className="text-gray-300">MCD Civic Centre, Minto Road</p>
+                  <p className="text-gray-300 text-sm">New Delhi, 110002</p>
                 </div>
               </div>
             </CardContent>
@@ -124,4 +124,3 @@ export const CivicResponsibilities = () => {
     </section>
   )
 }
-

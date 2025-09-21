@@ -1,94 +1,91 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Clock, AlertCircle, MapPin } from "lucide-react";
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Clock } from 'lucide-react';
 
-const progressUpdates = [
-  {
-    id: "RPT-001",
-    title: "Pothole on Main Street",
-    progress: 75,
-    status: "In Progress",
-    lastUpdate: "2024-01-18",
-    updates: [
-      { date: "2024-01-15", message: "Report submitted and acknowledged", type: "submitted" },
-      { date: "2024-01-16", message: "Issue validated by city inspector", type: "validated" },
-      { date: "2024-01-17", message: "Work crew assigned", type: "assigned" },
-      { date: "2024-01-18", message: "Repair materials ordered", type: "progress" }
-    ]
-  },
-  {
-    id: "RPT-002",
-    title: "Broken Streetlight",
-    progress: 100,
-    status: "Resolved",
-    lastUpdate: "2024-01-12",
-    updates: [
-      { date: "2024-01-10", message: "Report submitted", type: "submitted" },
-      { date: "2024-01-11", message: "Electrician dispatched", type: "assigned" },
-      { date: "2024-01-12", message: "Streetlight repaired and tested", type: "resolved" }
-    ]
-  }
-];
+type ReportStatus = 'Pending' | 'In Progress' | 'Resolved' | 'Rejected';
 
-const getStatusIcon = (type: string) => {
-  switch (type) {
-    case "resolved": return <CheckCircle className="h-4 w-4 text-green-600" />;
-    case "progress": return <Clock className="h-4 w-4 text-blue-600" />;
-    case "assigned": return <AlertCircle className="h-4 w-4 text-orange-600" />;
-    default: return <MapPin className="h-4 w-4 text-gray-600" />;
-  }
+interface Report {
+    id: number;
+    category: string;
+    description: string;
+    status: ReportStatus;
+    created_at: string;
+    deadline: string | null;
+}
+
+const statusStyles: { [key in ReportStatus]: string } = {
+  Pending: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+  'In Progress': 'bg-blue-100 text-blue-800 border-blue-300',
+  Resolved: 'bg-green-100 text-green-800 border-green-300',
+  Rejected: 'bg-red-100 text-red-800 border-red-300',
 };
 
-export default function ProgressPage() {
-  return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Progress Tracking</h1>
-        <p className="text-muted-foreground mt-2">Real-time updates on your reported issues</p>
-      </div>
+const Progress: React.FC = () => {
+    const [reports, setReports] = useState<Report[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
 
-      <div className="grid gap-6">
-        {progressUpdates.map((item) => (
-          <Card key={item.id} className="hover:shadow-lg transition-all duration-300">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{item.title}</CardTitle>
-                <Badge 
-                  variant={item.status === "Resolved" ? "default" : "secondary"}
-                >
-                  {item.status}
-                </Badge>
-              </div>
-              <CardDescription>
-                Last updated: {item.lastUpdate}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">Progress</span>
-                  <span className="text-sm text-muted-foreground">{item.progress}%</span>
-                </div>
-                <Progress value={item.progress} className="h-2" />
-              </div>
-              
-              <div className="space-y-3">
-                <h4 className="font-medium text-sm">Recent Updates</h4>
-                {item.updates.map((update, index) => (
-                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
-                    {getStatusIcon(update.type)}
-                    <div className="flex-1">
-                      <p className="text-sm">{update.message}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{update.date}</p>
+    useEffect(() => {
+        const fetchReports = async () => {
+            try {
+                const res = await fetch('http://localhost:5001/api/reports');
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                setReports(data);
+            } catch (err: any) {
+                setError(err.message ?? 'Unknown error');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchReports();
+    }, []);
+
+    if (loading) return <p className="text-center p-6">Loading your reports...</p>;
+    if (error) return <p className="text-center p-6 text-red-600">Error: {error}</p>;
+
+    return (
+        <div className="bg-gray-50 min-h-screen py-12">
+            <div className="container mx-auto p-4">
+                <h1 className="text-3xl font-bold mb-8 text-center text-gray-800">Track Your Reports</h1>
+                {reports.length === 0 ? (
+                    <p className="text-center text-gray-500">You have not submitted any reports yet.</p>
+                ) : (
+                    // ✅ CHANGED: Replaced single-column layout with a responsive grid
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {reports.map((report) => (
+                            // ✅ CHANGED: Removed width constraints to allow the card to fit in the grid
+                            <Card key={report.id} className="shadow-md flex flex-col">
+                                <CardHeader>
+                                    <div className="flex justify-between items-center">
+                                        <CardTitle className="capitalize">{report.category} Issue</CardTitle>
+                                        <Badge className={`border ${statusStyles[report.status]}`}>{report.status}</Badge>
+                                    </div>
+                                    <p className="text-sm text-gray-600">{report.description}</p>
+                                </CardHeader>
+                                <CardContent className="border-t pt-4 mt-auto">
+                                    <div className="flex flex-col space-y-2 text-sm text-gray-500">
+                                        <span className="flex items-center gap-2">
+                                            <Calendar className="h-4 w-4" />
+                                            Reported on {new Date(report.created_at).toLocaleDateString()}
+                                        </span>
+
+                                        {report.deadline && (
+                                            <span className="flex items-center gap-2 font-semibold text-blue-600">
+                                                <Clock className="h-4 w-4" />
+                                                Expected Resolution By: {new Date(report.deadline).toLocaleDateString()}
+                                            </span>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default Progress;

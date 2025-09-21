@@ -1,125 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
+  /* ✅ UPDATED: The --primary color is now a new shade of blue */
   :root {
-    --background: 210 17% 97%;
-    --foreground: 215 25% 27%;
-
+    --background: 220 20% 96%;
+    --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 27%;
-
+    --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 27%;
-
-    --primary: 214 84% 56%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 214 100% 68%;
-
-    --secondary: 210 17% 93%;
-    --secondary-foreground: 215 25% 27%;
-
-    --muted: 210 17% 93%;
-    --muted-foreground: 215 16% 57%;
-
-    --accent: 142 76% 36%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-
-    --border: 214 31% 91%;
-    --input: 214 31% 91%;
-    --ring: 214 84% 56%;
-
-    /* CivicSync Government Design System */
-    --civic-blue: 214 84% 56%;
-    --civic-blue-light: 214 100% 68%;
-    --civic-blue-dark: 214 84% 46%;
-    --civic-teal: 184 81% 29%;
-    --civic-green: 142 76% 36%;
-    --civic-sidebar: 220 13% 95%;
-    --civic-sidebar-active: 214 84% 56%;
-    
-    /* Hero gradients matching CivicSync */
-    --gradient-hero: linear-gradient(135deg, hsl(214 84% 56%), hsl(184 81% 29%));
-    --gradient-card-overlay: linear-gradient(145deg, hsl(214 84% 56% / 0.1), hsl(184 81% 29% / 0.1));
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(210 17% 98%));
-    
-    /* Shadows */
-    --shadow-soft: 0 4px 6px -1px hsl(214 84% 56% / 0.1);
-    --shadow-card: 0 10px 15px -3px hsl(214 84% 56% / 0.1);
-    
-    /* Transitions */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
+    --popover-foreground: 222.2 84% 4.9%;
+    /* --- THIS IS THE COLOR YOU WANTED TO CHANGE --- */
+    --primary: 217 91% 60%; /* New Blue */
+    --primary-foreground: 210 40% 98%;
+    /* --- END OF CHANGE --- */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 91% 60%; /* Matched to new primary blue */
     --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 222 47% 11%;
     --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
+    --card: 217 33% 17%;
     --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
+     /* --- THIS IS THE COLOR YOU WANTED TO CHANGE (DARK MODE) --- */
+    --primary: 217 91% 60%; /* New Blue */
+    --primary-foreground: 210 40% 98%;
+    /* --- END OF CHANGE --- */
+    --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 217 33% 17%;
     --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 217 33% 17%;
     --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 217 33% 27%;
+    --input: 217 33% 27%;
+    --ring: 217 91% 60%; /* Matched to new primary blue */
   }
 }
 
@@ -127,8 +60,9 @@ All colors MUST be HSL.
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
   }
 }
+
