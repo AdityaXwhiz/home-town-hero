@@ -167,7 +167,7 @@ app.post('/api/reports', reportUpload, (req, res) => {
     });
 });
 
-// --- *** THIS IS THE CORRECTED AND FUNCTIONAL FILTER ROUTE *** ---
+// --- THIS IS THE CORRECTED AND FUNCTIONAL FILTER ROUTE ---
 app.get('/api/reports', (req, res) => {
     const { category, status, startDate, endDate } = req.query;
 
@@ -265,6 +265,53 @@ app.post('/api/ngos', (req, res) => {
             return res.status(500).json({ msg: 'Database error during registration.' });
         }
         res.status(201).json({ msg: 'NGO registered successfully! Your application is pending review.' });
+    });
+});
+
+// --- ✨ NEW ANALYTICS ROUTE ✨ ---
+app.get('/api/analytics', (req, res) => {
+    const queries = {
+        totalReports: 'SELECT COUNT(*) as count FROM reports',
+        statusCounts: 'SELECT status, COUNT(*) as count FROM reports GROUP BY status',
+        categoryCounts: 'SELECT category, COUNT(*) as count FROM reports GROUP BY category',
+        recentReports: 'SELECT id, category, location, status, created_at FROM reports ORDER BY created_at DESC LIMIT 5'
+    };
+
+    const results = {};
+    const queryKeys = Object.keys(queries);
+    let completedQueries = 0;
+    let errorOccurred = false;
+
+    queryKeys.forEach(key => {
+        connection.query(queries[key], (err, queryResult) => {
+            if (errorOccurred) return;
+            if (err) {
+                errorOccurred = true;
+                console.error(`Database error for ${key}:`, err);
+                return res.status(500).json({ msg: 'Database error fetching analytics' });
+            }
+            results[key] = queryResult;
+            completedQueries++;
+            
+            if (completedQueries === queryKeys.length) {
+                const statusCounts = results.statusCounts.reduce((acc, row) => {
+                    acc[row.status] = row.count;
+                    return acc;
+                }, { 'Pending': 0, 'In Progress': 0, 'Resolved': 0 });
+
+                res.json({
+                    totalReports: results.totalReports[0].count,
+                    resolvedReports: statusCounts['Resolved'] || 0,
+                    pendingReports: statusCounts['Pending'] || 0,
+                    inProgressReports: statusCounts['In Progress'] || 0,
+                    categoryCounts: results.categoryCounts.map(row => ({
+                        name: row.category.charAt(0).toUpperCase() + row.category.slice(1),
+                        value: row.count
+                    })),
+                    recentReports: results.recentReports
+                });
+            }
+        });
     });
 });
 
