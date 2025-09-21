@@ -14,13 +14,13 @@ const saltRounds = 10;
 const uploadsDir = path.join(__dirname, 'uploads');
 const audioDir = path.join(uploadsDir, 'audio');
 const imagesDir = path.join(uploadsDir, 'images');
-const postImagesDir = path.join(uploadsDir, 'postImages'); // <-- 1. ADDED: Directory for post images
+const postImagesDir = path.join(uploadsDir, 'postImages');
 
 // Ensure upload directories exist
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
 if (!fs.existsSync(audioDir)) fs.mkdirSync(audioDir);
 if (!fs.existsSync(imagesDir)) fs.mkdirSync(imagesDir);
-if (!fs.existsSync(postImagesDir)) fs.mkdirSync(postImagesDir); // <-- 2. ADDED: Create the new directory
+if (!fs.existsSync(postImagesDir)) fs.mkdirSync(postImagesDir);
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -28,7 +28,7 @@ const storage = multer.diskStorage({
             cb(null, imagesDir);
         } else if (file.fieldname === 'voice_note') {
             cb(null, audioDir);
-        } else if (file.fieldname === 'postImage') { // <-- 3. ADDED: Handle post images
+        } else if (file.fieldname === 'postImage') {
             cb(null, postImagesDir);
         } else {
             cb(new Error('Invalid fieldname'), null);
@@ -44,7 +44,7 @@ const fileFilter = (req, file, cb) => {
     const imageTypes = /jpeg|jpg|png|gif/;
     const audioTypes = /webm|mp3|wav|ogg|mpeg/;
 
-    if (file.fieldname === 'reportImages' || file.fieldname === 'postImage') { // <-- 4. ADDED: Check for postImage
+    if (file.fieldname === 'reportImages' || file.fieldname === 'postImage') {
         const extname = imageTypes.test(path.extname(file.originalname).toLowerCase());
         const mimetype = imageTypes.test(file.mimetype);
         if (mimetype && extname) {
@@ -84,7 +84,6 @@ const connection = mysql.createConnection({
   password: '@dityAsingh',   // replace with your MySQL root password
   database: 'civicsync',   // replace with your DB name
   socketPath: '/tmp/mysql.sock'
-    
 });
 
 connection.connect(err => {
@@ -168,10 +167,37 @@ app.post('/api/reports', reportUpload, (req, res) => {
     });
 });
 
+// --- *** THIS IS THE CORRECTED AND FUNCTIONAL FILTER ROUTE *** ---
 app.get('/api/reports', (req, res) => {
-    let query = 'SELECT * FROM reports ORDER BY created_at DESC';
-    connection.query(query, (err, results) => {
-        if (err) return res.status(500).json({ msg: 'Database error', error: err });
+    const { category, status, startDate, endDate } = req.query;
+
+    let sql = 'SELECT * FROM reports WHERE 1=1';
+    const params = [];
+
+    if (category) {
+        sql += ' AND category = ?';
+        params.push(category);
+    }
+    if (status) {
+        sql += ' AND status = ?';
+        params.push(status);
+    }
+    if (startDate) {
+        sql += ' AND created_at >= ?';
+        params.push(startDate);
+    }
+    if (endDate) {
+        sql += ' AND created_at <= ?';
+        params.push(endDate);
+    }
+
+    sql += ' ORDER BY created_at DESC';
+
+    connection.query(sql, params, (err, results) => {
+        if (err) {
+            console.error('Database query error:', err);
+            return res.status(500).json({ msg: 'Database error', error: err });
+        }
         res.json(results);
     });
 });
@@ -243,7 +269,7 @@ app.post('/api/ngos', (req, res) => {
 });
 
 
-// --- ✨ ADDED: COMMUNITY POST ROUTES ✨ ---
+// --- COMMUNITY POST ROUTES ---
 const postUpload = upload.single('postImage');
 
 // GET all community posts
@@ -262,7 +288,7 @@ app.get('/api/posts', (req, res) => {
 app.post('/api/posts', postUpload, (req, res) => {
     const { title, content, author_name, author_avatar } = req.body;
     if (!title || !content || !author_name || !author_avatar) {
-        if (req.file) fs.unlinkSync(req.file.path); // Clean up uploaded file
+        if (req.file) fs.unlinkSync(req.file.path);
         return res.status(400).json({ msg: 'Title, content, and author details are required' });
     }
     
@@ -281,7 +307,6 @@ app.post('/api/posts', postUpload, (req, res) => {
 // PUT to like a post
 app.put('/api/posts/:id/like', (req, res) => {
     const { id } = req.params;
-    // This is a simplified "like" that just increments the count.
     const query = 'UPDATE community_posts SET likes = likes + 1 WHERE id = ?';
     connection.query(query, [id], (err, result) => {
         if (err) {
@@ -298,4 +323,3 @@ app.put('/api/posts/:id/like', (req, res) => {
 
 // --- START SERVER ---
 app.listen(PORT, () => console.log(`✅ Server started on port ${PORT}`));
-

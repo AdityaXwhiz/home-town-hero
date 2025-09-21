@@ -23,7 +23,6 @@ export default function Reports() {
         Object.entries(filters).filter(([, value]) => value !== '')
       );
       const queryParams = new URLSearchParams(activeFilters).toString();
-      // This fetch call matches the GET /api/reports route in your server.js
       const response = await fetch(`http://localhost:5001/api/reports?${queryParams}`);
       if (!response.ok) {
         throw new Error('Network response was not ok');
@@ -73,6 +72,7 @@ export default function Reports() {
               <SelectItem value="pothole">Pothole</SelectItem>
               <SelectItem value="streetlight">Streetlight</SelectItem>
               <SelectItem value="litter">Litter</SelectItem>
+              <SelectItem value="property">Damaged Property</SelectItem>
             </SelectContent>
           </Select>
           <Select onValueChange={handleStatusChange}>
@@ -94,7 +94,6 @@ export default function Reports() {
           <p className="text-center text-muted-foreground py-8">No reports found.</p>
         ) : (
           reports.map((report) => {
-            // Logic to correctly parse the image URLs from your server
             let imageUrls: string[] = [];
             if (report.image_urls && typeof report.image_urls === 'string') {
               try {
@@ -109,9 +108,12 @@ export default function Reports() {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg capitalize">{report.category} issue</CardTitle>
-                    <Badge variant={report.status === "Resolved" ? "default" : "outline"}>
-                      {report.status}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">ID: {report.id}</Badge>
+                      <Badge variant={report.status === "Resolved" ? "default" : "outline"}>
+                        {report.status}
+                      </Badge>
+                    </div>
                   </div>
                   <CardDescription className="flex items-center gap-4 text-sm pt-1">
                     <span className="flex items-center gap-1"><Calendar className="h-4 w-4" />{new Date(report.created_at).toLocaleDateString()}</span>
@@ -165,9 +167,12 @@ export default function Reports() {
                           View Details
                         </Link>
                       </Button>
-                      <Button variant="outline" size="sm">
-                        <MessageSquare className="h-4 w-4 mr-1" />
-                        Add Comment
+                      {/* --- THIS IS THE CHANGE --- */}
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/report/${report.id}`}>
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          Add Comment
+                        </Link>
                       </Button>
                     </div>
                   </div>

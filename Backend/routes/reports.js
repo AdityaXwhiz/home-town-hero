@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 
 // --- DATABASE CONNECTION ---
+// Make sure your database connection details are correct.
 const connection = mysql.createConnection({
   user: 'root',
   password: '@dityAsingh',
@@ -16,7 +17,7 @@ const connection = mysql.createConnection({
 // --- MULTER CONFIGURATION ---
 const uploadsDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -26,53 +27,74 @@ const storage = multer.diskStorage({
     cb(null, 'reportImages-' + Date.now() + path.extname(file.originalname));
   }
 });
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 10000000 },
-  fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|gif|mp4|mov|avi/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
-    if (mimetype && extname) {
-      return cb(null, true);
-    } else {
-      cb('Error: Only images and videos are allowed!');
-    }
-  }
-}).array('reportImages', 5);
+const upload = multer({ storage: storage }).array('reportImages', 5);
+
+
+// --- ROUTES ---
 
 // @route   GET /api/reports
-// @desc    Get all reports with filtering
+// @desc    Get all reports with dynamic and corrected filtering
 router.get('/', (req, res) => {
-  let query = 'SELECT * FROM reports ORDER BY created_at DESC';
-  // Note: Filtering logic can be added back here if needed
-  connection.query(query, (err, results) => {
-    if (err) return res.status(500).json({ msg: 'Database error', error: err });
+  const { category, status, startDate, endDate } = req.query;
+
+  let sql = 'SELECT * FROM reports WHERE 1=1';
+  const params = [];
+
+  // Dynamically build the query based on the filters provided
+  if (category) {
+    sql += ' AND category = ?';
+    params.push(category);
+  }
+  if (status) {
+    sql += ' AND status = ?';
+    params.push(status);
+  }
+  if (startDate) {
+    sql += ' AND created_at >= ?';
+    params.push(startDate);
+  }
+  // **FIXED LOGIC**: Use <= which works correctly for DATE and DATETIME columns.
+  if (endDate) {
+    sql += ' AND created_at <= ?';
+    params.push(endDate);
+  }
+
+  sql += ' ORDER BY created_at DESC';
+
+  console.log('Executing SQL:', sql, params); // For debugging purposes
+
+  connection.query(sql, params, (err, results) => {
+    if (err) {
+      console.error("Database query error:", err);
+      return res.status(500).json({ msg: 'Database error', error: err });
+    }
     res.json(results);
   });
 });
 
+
 // @route   POST /api/reports
-// @desc    Create a new report with multiple images
+// @desc    Create a new report
 router.post('/', (req, res) => {
   upload(req, res, (err) => {
     if (err) {
       return res.status(400).json({ msg: err });
     }
 
-    const { category, name, phone, location, description, latitude, longitude, map_url } = req.body;
+    const { category, name, phone, location, description, latitude, longitude, map_url, details } = req.body;
     
-    const imageUrl = req.files && req.files.length > 0 
-      ? req.files.map(file => `uploads/${file.filename}`).join(',') // Use relative path
+    // Store image paths as a JSON string in the database
+    const imageUrls = req.files && req.files.length > 0 
+      ? JSON.stringify(req.files.map(file => `/uploads/${file.filename}`))
       : null;
 
     if (!category || !name || !phone || !location || !description) {
       return res.status(400).json({ msg: 'All required fields were not provided.' });
     }
 
-    const insertQuery = 'INSERT INTO reports (category, name, phone, location, description, latitude, longitude, map_url, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const insertQuery = 'INSERT INTO reports (category, name, phone, location, description, latitude, longitude, map_url, details, image_urls) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     
-    connection.query(insertQuery, [category, name, phone, location, description, latitude, longitude, map_url, imageUrl], (err, result) => {
+    connection.query(insertQuery, [category, name, phone, location, description, latitude, longitude, map_url, details, imageUrls], (err, result) => {
       if (err) {
         console.error("Database insert error:", err);
         return res.status(500).json({ msg: 'Database insert error', error: err });
@@ -81,8 +103,6 @@ router.post('/', (req, res) => {
     });
   });
 });
-
-// --- ADDED FOR DETAIL & COMMENT FEATURES ---
 
 // @route   GET /api/reports/:id
 // @desc    Get a single report by its ID
