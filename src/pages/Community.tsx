@@ -5,69 +5,65 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Star, MessageCircle, Share2, Plus, X, Megaphone, AlertTriangle, Search, Wind, Image as ImageIcon, Loader2 } from "lucide-react";
-import { formatDistanceToNow } from 'date-fns'; // <-- 1. IMPORT THE NEW FUNCTION
+import { Star, MessageCircle, Share2, Plus, X, Search, Wind, Loader2 } from "lucide-react";
+import { formatDistanceToNow } from 'date-fns';
 
 // --- MOCK CURRENT USER (can be replaced with real auth data) ---
 const currentUser = {
   name: "Aditya Singh",
   avatar: "AS",
-  avatarUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=40&h=40&fit=crop&facepad=2&crop=faces"
+  avatarUrl: "https://api.dicebear.com/8.x/initials/svg?seed=Aditya%20Singh"
 };
 
 const PostCard = ({ post, onLikeToggle }) => {
-    const isAnnouncement = post.is_announcement;
-    const isSevere = post.severity === 'high';
+    // This logic now correctly handles both external URLs and internal server paths.
+    const imageUrl = post.image_url
+      ? (post.image_url.startsWith('http') ? post.image_url : `http://localhost:5001${post.image_url}`)
+      : "https://placehold.co/600x400/e2e8f0/64748b?text=CivicSync";
     
-    // Construct the full URL for images served from the backend
-    const imageUrl = post.image_url ? `http://localhost:5001${post.image_url}` : "https://images.unsplash.com/photo-1526649661456-89c7ed4d00b8?q=80&w=600&h=400&fit=crop";
-    
-    // --- 2. UPDATED, MORE RELIABLE timeAgo FUNCTION ---
     const timeAgo = (date) => {
-        if (!date) {
-            return "a moment ago"; 
-        }
+        if (!date) return "a moment ago"; 
         try {
-            // Use the robust date-fns library to handle formatting
             return `${formatDistanceToNow(new Date(date))} ago`;
         } catch (error) {
             console.error("Could not format date:", date, error);
-            return "a moment ago"; // Safe fallback
+            return "a moment ago";
         }
     };
 
     return (
-        <Card className={`flex flex-col h-full overflow-hidden transition-shadow duration-300 group hover:shadow-lg rounded-lg ${isAnnouncement ? 'border-t-4 border-blue-400' : isSevere ? 'border-t-4 border-red-500' : 'border'}`}>
-            <div className="relative overflow-hidden">
-                <img src={imageUrl} alt={post.title} className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-105" />
+        <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 group hover:shadow-xl hover:-translate-y-1 rounded-xl border">
+            <div className="relative overflow-hidden aspect-video">
+                <img src={imageUrl} alt={post.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
             </div>
             <CardHeader className="pt-4 pb-2">
                 <div className="flex items-start gap-3">
-                    <Avatar className="h-9 w-9">
-                        <AvatarFallback className={isAnnouncement ? 'bg-blue-200 text-blue-800 font-semibold' : 'bg-gray-200 text-gray-700 font-semibold'}>{post.author_avatar}</AvatarFallback>
+                    <Avatar className="h-10 w-10">
+                        <AvatarImage src={post.author_avatar} />
+                        <AvatarFallback className="bg-gray-100 font-semibold">
+                           {post.author_name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                        <CardTitle className="text-base font-bold leading-tight">{post.title}</CardTitle>
+                        <CardTitle className="text-md font-bold leading-tight">{post.title}</CardTitle>
                         <CardDescription className="text-xs mt-1">
-                            Posted by <span className="font-semibold">{post.author_name}</span> • {timeAgo(post.created_at)}
+                            Posted by <span className="font-semibold text-foreground">{post.author_name}</span> • {timeAgo(post.created_at)}
                         </CardDescription>
                     </div>
-                    {isAnnouncement && <Megaphone className="h-5 w-5 text-blue-500 flex-shrink-0" />}
-                    {isSevere && <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0" />}
                 </div>
             </CardHeader>
             <CardContent className="flex-grow flex flex-col justify-between pt-2">
-                <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{post.content}</p>
-                <div className="flex items-center gap-2 pt-2 border-t">
-                    <Button variant="ghost" size="sm" onClick={() => onLikeToggle(post.id, post.isLiked)} className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground">
+                <p className="text-sm text-muted-foreground line-clamp-3 mb-4">{post.content}</p>
+                <div className="flex items-center gap-2 pt-3 border-t">
+                    <Button variant="ghost" size="sm" onClick={() => onLikeToggle(post.id, post.isLiked)} className="flex items-center gap-1.5 text-muted-foreground hover:text-yellow-500">
                         <Star className={`h-4 w-4 transition-colors ${post.isLiked ? 'text-yellow-400 fill-yellow-400' : ''}`} />
                         <span className="text-xs font-semibold">{post.likes}</span>
                     </Button>
-                    <Button variant="ghost" size="sm" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-1.5 text-muted-foreground hover:text-blue-500">
                         <MessageCircle className="h-4 w-4" />
-                        <span className="text-xs font-semibold">{post.comments}</span>
+                        <span className="text-xs font-semibold">{post.comments || 0}</span>
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 ml-auto text-muted-foreground hover:text-foreground">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 ml-auto text-muted-foreground hover:text-indigo-500">
                         <Share2 className="h-4 w-4" />
                     </Button>
                 </div>
@@ -108,7 +104,7 @@ const CreatePostModal = ({ isOpen, onClose, onCreatePost }) => {
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <Card className="w-full max-w-lg animate-in fade-in-90 slide-in-from-bottom-10">
+            <Card className="w-full max-w-lg animate-in fade-in-90 slide-in-from-bottom-10 shadow-2xl">
                 <CardHeader>
                     <CardTitle className="flex items-center justify-between">Create a New Post<Button variant="ghost" size="icon" onClick={onClose}><X className="h-5 w-5" /></Button></CardTitle>
                     <CardDescription>Share an issue, success story, or idea with the community.</CardDescription>
@@ -116,10 +112,10 @@ const CreatePostModal = ({ isOpen, onClose, onCreatePost }) => {
                 <CardContent className="space-y-4">
                     <div className="space-y-2"><Label htmlFor="title">Title</Label><Input id="title" placeholder="Enter a compelling title..." value={title} onChange={(e) => setTitle(e.target.value)} /></div>
                     <div className="space-y-2"><Label htmlFor="content">Description</Label><Textarea id="content" placeholder="Describe the situation in detail..." rows={5} value={content} onChange={(e) => setContent(e.target.value)} /></div>
-                    <div className="space-y-2"><Label htmlFor="postImage">Attach an Image (Optional)</Label><Input id="postImage" type="file" accept="image/*" onChange={handleImageChange} className="file:text-blue-700 file:font-semibold" /></div>
-                    {imagePreview && <div className="mt-4 rounded-md overflow-hidden border"><img src={imagePreview} alt="Post preview" className="w-full h-auto object-cover max-h-48" /></div>}
-                    <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full">
-                        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Publish Post"}
+                    <div className="space-y-2"><Label htmlFor="postImage">Attach an Image (Optional)</Label><Input id="postImage" type="file" accept="image/*" onChange={handleImageChange} className="file:text-primary file:font-semibold" /></div>
+                    {imagePreview && <div className="mt-4 rounded-md overflow-hidden border aspect-video"><img src={imagePreview} alt="Post preview" className="w-full h-full object-cover" /></div>}
+                    <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full text-lg py-6">
+                        {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "Publish Post"}
                     </Button>
                 </CardContent>
             </Card>
@@ -186,14 +182,12 @@ export default function CommunityBlogPage() {
         ));
         
         try {
-            // NOTE: The backend only supports incrementing likes. A real implementation would need more logic for toggling.
             if (!isCurrentlyLiked) {
                  await fetch(`http://localhost:5001/api/posts/${postId}/like`, { method: 'PUT' });
             }
         } catch (err) {
             console.error("Failed to update like status:", err);
-            // Revert UI on error
-             setPosts(posts.map(post => 
+            setPosts(posts.map(post => 
                 post.id === postId ? { ...post, isLiked: isCurrentlyLiked, likes: isCurrentlyLiked ? post.likes + 1 : post.likes - 1 } : post
             ));
         }
@@ -202,9 +196,7 @@ export default function CommunityBlogPage() {
     const filteredPosts = useMemo(() => {
         let currentPosts = posts;
         switch (activeTab) {
-            case 'trending': currentPosts = posts.filter(p => p.likes > 100 && !p.is_announcement); break;
-            case 'severe': currentPosts = posts.filter(p => p.severity === 'high'); break;
-            case 'announcements': currentPosts = posts.filter(p => p.is_announcement); break;
+            case 'trending': currentPosts = [...posts].sort((a,b) => b.likes - a.likes).slice(0, 10); break;
             default: currentPosts = posts;
         }
         if (searchTerm) {
@@ -218,27 +210,28 @@ export default function CommunityBlogPage() {
     }, [activeTab, posts, searchTerm]);
 
     const TabButton = ({ tabName, label }) => (
-        <Button variant={activeTab === tabName ? 'secondary' : 'ghost'} onClick={() => setActiveTab(tabName)} className="rounded-full px-4 h-9">{label}</Button>
+        <Button variant={activeTab === tabName ? 'default' : 'ghost'} onClick={() => setActiveTab(tabName)} className="rounded-full px-5 h-10 transition-all">
+            {label}
+        </Button>
     );
 
     return (
-        <div className="bg-gray-50/50 min-h-screen">
-            <div className="p-6 space-y-6 relative">
+        <div className="bg-slate-50 min-h-screen">
+            <div className="container mx-auto px-4 py-8 space-y-8">
                 <header className="flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Community Feed</h1>
-                        <p className="text-muted-foreground text-sm">Welcome back, {currentUser.name}!</p>
+                        <h1 className="text-3xl font-bold text-foreground">Community Feed</h1>
+                        <p className="text-muted-foreground mt-1">Welcome back, {currentUser.name}! Share and discover what's happening.</p>
                     </div>
                     <div className="flex items-center gap-4 w-full sm:w-auto">
-                        <div className="relative w-full sm:w-64"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search posts..." className="pl-9 h-10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
-                        <Avatar><AvatarImage src={currentUser.avatarUrl} alt={currentUser.name} /><AvatarFallback>{currentUser.avatar}</AvatarFallback></Avatar>
+                        <div className="relative w-full sm:w-72"><Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><Input placeholder="Search posts..." className="pl-11 h-11 text-base" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
                     </div>
                 </header>
 
-                <div className="border-b"><div className="flex items-center space-x-1"><TabButton tabName="all" label="All Posts" /><TabButton tabName="trending" label="Trending" /><TabButton tabName="severe" label="Severe Issues" /><TabButton tabName="announcements" label="Announcements" /></div></div>
+                <div className="border-b"><div className="flex items-center space-x-2"><TabButton tabName="all" label="All Posts" /><TabButton tabName="trending" label="Trending" /></div></div>
                 
-                {loading && <div className="text-center py-16"><Loader2 className="h-12 w-12 mx-auto animate-spin text-primary" /></div>}
-                {error && <div className="text-center py-16 text-red-500 font-semibold">{error}</div>}
+                {loading && <div className="text-center py-24"><Loader2 className="h-16 w-16 mx-auto animate-spin text-primary" /></div>}
+                {error && <div className="text-center py-24 text-red-600 font-semibold bg-red-50 p-6 rounded-lg">{error}</div>}
 
                 {!loading && !error && (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
@@ -247,14 +240,16 @@ export default function CommunityBlogPage() {
                 )}
 
                 {!loading && !error && filteredPosts.length === 0 && (
-                    <div className="text-center py-16 text-muted-foreground col-span-full">
-                        <Wind className="h-12 w-12 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold">No posts found</h3>
-                        <p>Try adjusting your search or filters, or be the first to post!</p>
+                    <div className="text-center py-24 text-muted-foreground col-span-full">
+                        <Wind className="h-16 w-16 mx-auto mb-4 text-slate-400" />
+                        <h3 className="text-xl font-semibold">No posts found</h3>
+                        <p className="mt-2">Try adjusting your search or filters, or be the first to share something!</p>
                     </div>
                 )}
 
-                <Button onClick={() => setIsModalOpen(true)} className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg z-40"><Plus className="h-8 w-8" /></Button>
+                <Button onClick={() => setIsModalOpen(true)} className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-2xl z-40 transform hover:scale-110 transition-transform">
+                    <Plus className="h-8 w-8" />
+                </Button>
                 
                 <CreatePostModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onCreatePost={handleCreatePost} />
             </div>
