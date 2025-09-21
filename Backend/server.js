@@ -268,7 +268,7 @@ app.post('/api/ngos', (req, res) => {
     });
 });
 
-// --- ✨ NEW ANALYTICS ROUTE ✨ ---
+// --- ANALYTICS ROUTE ---
 app.get('/api/analytics', (req, res) => {
     const queries = {
         totalReports: 'SELECT COUNT(*) as count FROM reports',
@@ -310,6 +310,37 @@ app.get('/api/analytics', (req, res) => {
                     })),
                     recentReports: results.recentReports
                 });
+            }
+        });
+    });
+});
+
+// --- HERO SECTION STATS ROUTE ---
+app.get('/api/hero-stats', (req, res) => {
+    const queries = {
+        issuesResolved: "SELECT COUNT(*) as count FROM reports WHERE status = 'Resolved'",
+        activeCitizens: "SELECT COUNT(*) as count FROM users",
+        ngoPartners: "SELECT COUNT(*) as count FROM ngos"
+    };
+
+    const results = {};
+    const queryKeys = Object.keys(queries);
+    let completedQueries = 0;
+    let errorOccurred = false;
+
+    queryKeys.forEach(key => {
+        connection.query(queries[key], (err, queryResult) => {
+            if (errorOccurred) return;
+            if (err) {
+                errorOccurred = true;
+                console.error(`Database error for ${key}:`, err);
+                return res.status(500).json({ msg: 'Database error fetching hero stats' });
+            }
+            results[key] = queryResult[0].count;
+            completedQueries++;
+            
+            if (completedQueries === queryKeys.length) {
+                res.json(results);
             }
         });
     });
@@ -370,3 +401,4 @@ app.put('/api/posts/:id/like', (req, res) => {
 
 // --- START SERVER ---
 app.listen(PORT, () => console.log(`✅ Server started on port ${PORT}`));
+
