@@ -12,7 +12,6 @@ interface ActionableReport {
     deadline: string | null;
     final_deadline: string | null;
     map_url: string;
-    // Add status to handle real-time updates correctly
     status?: 'Pending' | 'In Progress' | 'Resolved' | 'Rejected';
 }
 
@@ -27,7 +26,6 @@ const alertStyles = {
 
 type DeadlineStatus = keyof typeof alertStyles;
 
-// Initialize socket connection outside the component to prevent re-connections
 const socket: Socket = io("http://localhost:5001");
 
 const getDeadlineInfo = (report: ActionableReport): { status: DeadlineStatus; text: string } => {
@@ -58,15 +56,27 @@ export const AlertsPage: React.FC = () => {
     const [actionableReports, setActionableReports] = useState<ActionableReport[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [filter, setFilter] = useState<AlertFilter>('all');
+    // ✅ NEW: State to hold any potential fetch errors
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        // Fetch initial data when the component mounts
-        fetch("http://localhost:5001/api/alerts/actionable")
-            .then(res => res.json())
-            .then(data => setActionableReports(data))
-            .finally(() => setLoading(false));
+        const fetchAlerts = async () => {
+            try {
+                const response = await fetch("http://localhost:5001/api/alerts/actionable");
+                if (!response.ok) {
+                    throw new Error(`Server responded with ${response.status}`);
+                }
+                const data = await response.json();
+                setActionableReports(data);
+            } catch (err: any) {
+                setError(err.message || 'Failed to fetch alerts.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchAlerts();
         
-        // --- REAL-TIME LISTENERS ---
         const handleReportUpdate = (updatedReport: ActionableReport) => {
             const isActionable = 
                 (updatedReport.status === 'Pending' || updatedReport.status === 'In Progress') 
@@ -76,25 +86,18 @@ export const AlertsPage: React.FC = () => {
                 const reportExists = currentReports.some(r => r.id === updatedReport.id);
 
                 if (isActionable) {
-                    if (reportExists) {
-                        // Update the existing report in the list
-                        return currentReports.map(r => r.id === updatedReport.id ? updatedReport : r);
-                    } else {
-                        // Add the new actionable report to the list
-                        return [...currentReports, updatedReport];
-                    }
+                    return reportExists 
+                        ? currentReports.map(r => r.id === updatedReport.id ? updatedReport : r)
+                        : [...currentReports, updatedReport];
                 } else {
-                    // If the report is no longer actionable (e.g., resolved), remove it
                     return currentReports.filter(r => r.id !== updatedReport.id);
                 }
             });
         };
 
-        // A new report could be actionable if created with a deadline
         socket.on('new_report', handleReportUpdate);
         socket.on('report_updated', handleReportUpdate);
 
-        // Cleanup listeners when the component unmounts
         return () => {
             socket.off('new_report', handleReportUpdate);
             socket.off('report_updated', handleReportUpdate);
@@ -102,10 +105,11 @@ export const AlertsPage: React.FC = () => {
     }, []);
 
     const filteredReports = useMemo(() => {
+        // ✅ FIX: Robust sorting that handles null deadlines gracefully
         const sorted = [...actionableReports].sort((a, b) => {
-            const dateA = a.deadline ? new Date(a.deadline) : new Date(0);
-            const dateB = b.deadline ? new Date(b.deadline) : new Date(0);
-            return dateA.getTime() - dateB.getTime();
+            const dateA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+            const dateB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+            return dateA - dateB;
         });
 
         if (filter === 'all') return sorted;
@@ -120,6 +124,8 @@ export const AlertsPage: React.FC = () => {
     }, [actionableReports, filter]);
 
     if (loading) return <p className="p-6 text-foreground">Loading alerts...</p>;
+    // ✅ NEW: Display a clear error message if the fetch fails
+    if (error) return <p className="p-6 text-destructive">Error: {error}</p>;
 
     return (
         <div className="p-6">
@@ -154,6 +160,7 @@ export const AlertsPage: React.FC = () => {
                                     <CardContent className="space-y-4">
                                         <div className="flex items-center gap-2 text-sm opacity-90">
                                             <Calendar className="h-4 w-4" />
+                                            {/* ✅ FIX: Safely render deadline to prevent crashing on null */}
                                             <span>
                                                 Deadline: {report.deadline ? new Date(report.deadline).toLocaleDateString() : 'Not set'}
                                             </span>

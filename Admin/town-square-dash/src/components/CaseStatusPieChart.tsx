@@ -1,31 +1,17 @@
-// In src/components/CaseStatusPieChart.tsx
 import React from "react";
 import { Pie } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend,
-} from "chart.js";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import type { ChartData, ChartOptions } from "chart.js";
 
-// ✅ Register chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// ✅ FIX: The component now accepts a 'data' prop and no longer fetches its own data.
 export const CaseStatusPieChart = ({ data }) => {
-  // ✅ FIX: Handle the loading state if data is not yet available from the parent.
   if (!data) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        Loading...
-      </div>
-    );
+    return <div className="flex items-center justify-center h-full">Loading...</div>;
   }
 
-  // ✅ FIX: Data processing is now in the main body, using the 'data' prop.
   const chartData: ChartData<"pie"> = {
-    labels: ["Pending", "In Progress", "Resolved"],
+    labels: ["Pending", "In Progress", "Resolved", "Rejected"],
     datasets: [
       {
         label: "Cases",
@@ -33,8 +19,9 @@ export const CaseStatusPieChart = ({ data }) => {
           data.pending || 0,
           data.inProgress || 0,
           data.resolved || 0,
+          data.rejected || 0,
         ],
-        backgroundColor: ["#FF9F40", "#36A2EB", "#4BC0C0"],
+        backgroundColor: ["#FFC107", "#03A9F4", "#4CAF50", "#F44336"],
         borderColor: "#ffffff",
         borderWidth: 2,
       },

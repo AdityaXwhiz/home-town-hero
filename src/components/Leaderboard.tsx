@@ -11,84 +11,86 @@ import {
 } from "lucide-react";
 
 export const Leaderboard = () => {
+  // ✅ Updated with Indian names and context
   const topReporters = [
     {
       rank: 1,
-      name: "Sarah Johnson",
+      name: "Priya Sharma",
       reports: 47,
       resolved: 43,
       stars: 156,
-      badges: ["Gold Reporter", "Community Hero"],
-      avatar: "SJ",
+      badges: ["Gold Reporter", "Samaj Hero"],
+      avatar: "PS",
       trend: "+5"
     },
     {
       rank: 2, 
-      name: "Mike Chen",
+      name: "Rohan Kumar",
       reports: 39,
       resolved: 37,
       stars: 134,
-      badges: ["Silver Reporter", "Neighborhood Watch"],
-      avatar: "MC",
+      badges: ["Silver Reporter", "Mohalla Watch"],
+      avatar: "RK",
       trend: "+3"
     },
     {
       rank: 3,
-      name: "Emily Rodriguez", 
+      name: "Anjali Singh", 
       reports: 34,
       resolved: 31,
       stars: 118,
       badges: ["Bronze Reporter", "Safety First"],
-      avatar: "ER", 
+      avatar: "AS", 
       trend: "+7"
     },
     {
       rank: 4,
-      name: "David Kim",
+      name: "Vikram Patel",
       reports: 29,
       resolved: 28,
       stars: 89,
       badges: ["Active Citizen"],
-      avatar: "DK",
+      avatar: "VP",
       trend: "+2"
     },
     {
       rank: 5,
-      name: "Lisa Thompson",
+      name: "Meera Gupta",
       reports: 25,
       resolved: 24,
       stars: 76,
       badges: ["Community Helper"],
-      avatar: "LT", 
+      avatar: "MG", 
       trend: "+4"
     }
   ];
 
+  // ✅ Updated with Indian context
   const badges = [
     {
-      name: "First Reporter",
+      name: "Pehla Kadam", // First Step
       description: "First to report an issue in your area",
       icon: Trophy,
       color: "bg-yellow-500",
       requirements: "Report 1 issue"
     },
     {
-      name: "Community Hero",
+      name: "Samaj Hero", // Community Hero
       description: "Reported 25+ issues that got resolved",
       icon: Award,
       color: "bg-blue-500", 
       requirements: "25 resolved reports"
     },
     {
-      name: "Safety Champion", 
+      name: "Suraksha Champion", // Safety Champion
       description: "Consistently reports safety hazards",
       icon: Medal,
       color: "bg-green-500",
       requirements: "10 safety reports"
     },
     {
-      name: "Neighborhood Guardian",
-      description: "Active in improving local community",
+      name: "Mohalla Guardian", // Neighborhood Guardian
+      description: "Active in improving your local community",
       icon: Users,
       color: "bg-purple-500",
       requirements: "50+ total reports"

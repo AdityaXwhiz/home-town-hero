@@ -23,24 +23,24 @@ export default function Settings() {
             <Avatar className="w-20 h-20 mx-auto mb-4">
               <AvatarFallback className="text-xl">JD</AvatarFallback>
             </Avatar>
-            <CardTitle>John Doe</CardTitle>
+            <CardTitle>Aditya Singh</CardTitle>
             <CardDescription>Active Civic Contributor</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Total Reports</span>
-              <Badge variant="secondary">23</Badge>
+              <Badge variant="secondary">12</Badge>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Community Stars</span>
               <div className="flex items-center gap-1">
                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span className="font-medium">147</span>
+                <span className="font-medium">31</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Member Since</span>
-              <span className="text-sm">Jan 2024</span>
+              <span className="text-sm">Sept 2025</span>
             </div>
             <Separator />
             <div className="flex flex-wrap gap-1">
@@ -66,24 +66,24 @@ export default function Settings() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" defaultValue="John" />
+                  <Input id="firstName" defaultValue="Aditya" />
                 </div>
                 <div>
                   <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" defaultValue="Doe" />
+                  <Input id="lastName" defaultValue="Singh" />
                 </div>
               </div>
               <div>
                 <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" defaultValue="john.doe@email.com" />
+                <Input id="email" type="email" defaultValue="adityasingh@email.com" />
               </div>
               <div>
                 <Label htmlFor="phone">Phone Number</Label>
-                <Input id="phone" type="tel" defaultValue="+1 (555) 123-4567" />
+                <Input id="phone" type="tel" defaultValue="5467890098" />
               </div>
               <div>
                 <Label htmlFor="location">Default Location</Label>
-                <Input id="location" defaultValue="Downtown District, City" />
+                <Input id="location" defaultValue="CP, Delhi" />
               </div>
               <Button>Save Changes</Button>
             </CardContent>

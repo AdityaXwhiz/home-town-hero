@@ -232,8 +232,14 @@ app.put('/api/reports/:id/status', (req, res) => {
         return res.status(400).json({ msg: 'Invalid status provided.' });
     }
 
-    const updateQuery = 'UPDATE reports SET status = ? WHERE id = ?';
-    connection.query(updateQuery, [status, id], (err, result) => {
+    // Add updated_at timestamp when a case is resolved
+    const updateQuery = status === 'Resolved' 
+        ? 'UPDATE reports SET status = ?, updated_at = NOW() WHERE id = ?'
+        : 'UPDATE reports SET status = ? WHERE id = ?';
+    
+    const queryParams = status === 'Resolved' ? [status, id] : [status, id];
+
+    connection.query(updateQuery, queryParams, (err, result) => {
         if (err) {
             console.error('Database update error:', err);
             return res.status(500).json({ msg: 'Database error updating status' });
@@ -362,46 +368,93 @@ app.get('/api/alerts/actionable', (req, res) => {
     });
 });
 
+// --- UPDATED AND ENHANCED ANALYTICS ENDPOINT ---
 app.get('/api/analytics', (req, res) => {
     const queries = {
-        totalReports: 'SELECT COUNT(*) as count FROM reports',
         statusCounts: 'SELECT status, COUNT(*) as count FROM reports GROUP BY status',
-        categoryCounts: 'SELECT category, COUNT(*) as count FROM reports GROUP BY category',
-        recentReports: 'SELECT * FROM reports ORDER BY created_at DESC LIMIT 15' // Increased limit for better trends
+        topCategories: 'SELECT category, COUNT(*) as count FROM reports GROUP BY category ORDER BY count DESC LIMIT 5',
+        monthlyTrends: `
+            SELECT 
+                DATE_FORMAT(created_at, '%b') as month,
+                COUNT(id) as created,
+                SUM(CASE WHEN status = 'Resolved' THEN 1 ELSE 0 END) as resolved
+            FROM reports
+            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+            GROUP BY month
+            ORDER BY MIN(created_at)
+        `,
+        avgResolutionTime: `
+            SELECT AVG(TIMESTAMPDIFF(HOUR, created_at, updated_at)) as avg_hours
+            FROM reports
+            WHERE status = 'Resolved' AND updated_at IS NOT NULL
+        `,
+        openCaseLocations: `
+            SELECT latitude, longitude, category 
+            FROM reports 
+            WHERE status IN ('Pending', 'In Progress') AND latitude IS NOT NULL AND longitude IS NOT NULL
+        `
     };
+
     const results = {};
     const queryKeys = Object.keys(queries);
     let completedQueries = 0;
     let errorOccurred = false;
+
     queryKeys.forEach(key => {
         connection.query(queries[key], (err, queryResult) => {
             if (errorOccurred) return;
             if (err) {
                 errorOccurred = true;
-                return res.status(500).json({ msg: 'Database error fetching analytics' });
+                console.error(`Analytics query error for ${key}:`, err);
+                return res.status(500).json({ msg: `Database error fetching analytics for ${key}` });
             }
             results[key] = queryResult;
             completedQueries++;
             if (completedQueries === queryKeys.length) {
+                // Process status counts for KPI cards
                 const statusCounts = results.statusCounts.reduce((acc, row) => {
                     acc[row.status] = row.count;
                     return acc;
                 }, {});
+
+                const pending = statusCounts['Pending'] || 0;
+                const inProgress = statusCounts['In Progress'] || 0;
+
+                // Format data for the final response object
                 res.json({
-                    totalReports: results.totalReports[0].count,
-                    resolvedReports: statusCounts['Resolved'] || 0,
-                    pendingReports: statusCounts['Pending'] || 0,
-                    inProgressReports: statusCounts['In Progress'] || 0,
-                    categoryCounts: results.categoryCounts.map(row => ({
-                        name: row.category,
-                        value: row.count
+                    activeCases: pending + inProgress,
+                    pendingReview: pending,
+                    avgResponseTime: results.avgResolutionTime[0]?.avg_hours ? parseFloat(results.avgResolutionTime[0].avg_hours).toFixed(1) : 0,
+                    
+                    caseStatusOverview: {
+                        pending: pending,
+                        inProgress: inProgress,
+                        resolved: statusCounts['Resolved'] || 0,
+                        rejected: statusCounts['Rejected'] || 0,
+                    },
+
+                    monthlyTrends: {
+                        labels: results.monthlyTrends.map(r => r.month),
+                        datasets: [
+                            { label: 'Cases Created', data: results.monthlyTrends.map(r => r.created) },
+                            { label: 'Cases Resolved', data: results.monthlyTrends.map(r => r.resolved) }
+                        ]
+                    },
+
+                    topReportCategories: results.topCategories,
+
+                    avgResolutionTimeByCategory: results.topCategories.map(cat => ({ // Placeholder data
+                        category: cat.category,
+                        avg_hours: (Math.random() * 72 + 24).toFixed(1) 
                     })),
-                    recentReports: results.recentReports
+
+                    openCaseLocations: results.openCaseLocations
                 });
             }
         });
     });
 });
+
 
 app.get('/api/hero-stats', (req, res) => {
     const queries = {
@@ -459,3 +512,4 @@ app.put('/api/posts/:id/like', (req, res) => {
 
 // --- START SERVER ---
 server.listen(PORT, () => console.log(`✅ Server with real-time support started on port ${PORT}`));
+
